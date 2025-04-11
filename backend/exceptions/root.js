@@ -12,7 +12,9 @@ export class HttpException extends Error {
 // Error codes
 export const ErrorCodes = Object.freeze({
   USER_ALREADY_EXIST: 1001,
-  USER_NAME_ALREADY_EXIST: 1002,
-  UNPROCESSABLE_ENTITY: 1003,
+  USER_NOT_FOUND: 1002,
+  USER_NAME_ALREADY_EXIST: 1003,
+  INVALID_CREDENTIAL: 1004,
+  UNPROCESSABLE_ENTITY: 3003,
   INTERNAL_ERROR: 2001,
 });

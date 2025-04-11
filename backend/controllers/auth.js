@@ -1,6 +1,6 @@
 import User from "../models/user.js";
 import { BadRequestException } from "../exceptions/badRequestException.js";
-import { hashSync } from "bcryptjs";
+import { compareSync, hashSync } from "bcryptjs";
 import { signUpSchema } from "../validators/signUpSchema.js";
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 import { ErrorCodes } from "../exceptions/root.js";
@@ -40,5 +40,28 @@ export const signup = async (req, res, next) => {
   } else {
     console.log("Invalid user Data");
   }
+};
+export const login = async (req, res, next) => {
+  const { username, password } = req.body;
+  const user = await User.findOne({ username });
+  if (!user) {
+    next(new BadRequestException("User not found!", ErrorCodes.USER_NOT_FOUND));
+  }
+
+  const isValidPassword = compareSync(password, user.password);
+  if (!isValidPassword) {
+    next(
+      new BadRequestException(
+        "Invalid Credentials",
+        ErrorCodes.INVALID_CREDENTIAL
+      )
+    );
+  }
+  const { password: pwd, ...userData } = user._doc;
+  generateTokenAndSetCookie(user._id, res);
+  res.status(200).json({
+    success: true,
+    data: userData,
+  });
 };
 //hYkS2P1iKvhVWcfq
