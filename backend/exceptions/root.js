@@ -17,4 +17,5 @@ export const ErrorCodes = Object.freeze({
   INVALID_CREDENTIAL: 1004,
   UNPROCESSABLE_ENTITY: 3003,
   INTERNAL_ERROR: 2001,
+  INVALID_REQUEST: 2002,
 });
