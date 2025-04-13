@@ -10,7 +10,7 @@ export const signup = async (req, res, next) => {
   const { username, fullName, password, email } = validatedData;
   const existedUserName = await User.findOne({ username });
   if (existedUserName) {
-    next(
+    return next(
       new BadRequestException(
         "Username alreay taken!",
         ErrorCodes.USER_NAME_ALREADY_EXIST
@@ -19,7 +19,7 @@ export const signup = async (req, res, next) => {
   }
   const existedUser = await User.findOne({ email });
   if (existedUser) {
-    next(
+    return next(
       new BadRequestException(
         "User alreay exist try to login!",
         ErrorCodes.USER_ALREADY_EXIST
@@ -45,12 +45,14 @@ export const login = async (req, res, next) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
   if (!user) {
-    next(new BadRequestException("User not found!", ErrorCodes.USER_NOT_FOUND));
+    return next(
+      new BadRequestException("User not found!", ErrorCodes.USER_NOT_FOUND)
+    );
   }
 
   const isValidPassword = compareSync(password, user.password);
   if (!isValidPassword) {
-    next(
+    return next(
       new BadRequestException(
         "Invalid Credentials",
         ErrorCodes.INVALID_CREDENTIAL
@@ -63,5 +65,12 @@ export const login = async (req, res, next) => {
     success: true,
     data: userData,
   });
+};
+export const logOut = async (req, res, next) => {
+  res.cookie("jwt", "", { maxAge: 0 });
+  res.status(200).json({ message: "Logged out Successfully" });
+};
+export const getMe = async (req, res, next) => {
+  res.status(200).json({ success: true, data: req.user });
 };
 //hYkS2P1iKvhVWcfq
