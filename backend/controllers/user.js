@@ -1,5 +1,6 @@
 import { BadRequestException } from "../exceptions/badRequestException.js";
 import { ErrorCodes } from "../exceptions/root.js";
+import Notification from "../models/notification.js";
 import User from "../models/user.js";
 
 export const getUserProfile = async (req, res, next) => {
@@ -39,6 +40,8 @@ export const followUnfollowUser = async (req, res, next) => {
     await User.findByIdAndUpdate(currentUser._id, {
       $pull: { following: id },
     });
+    //TODO: return the id
+
     res.status(200).json("Unfollowed successfully!");
   } else {
     await User.findByIdAndUpdate(id, {
@@ -47,8 +50,38 @@ export const followUnfollowUser = async (req, res, next) => {
     await User.findByIdAndUpdate(currentUser._id, {
       $push: { following: id },
     });
+    const newNotification = new Notification({
+      from: currentUser._id,
+      to: id,
+      type: "follow",
+    });
+    await newNotification.save();
+    //TODO: return the id
     res.status(200).json("Followed successfully!");
-
-    // TODO: send notification
   }
+};
+export const getSuggestedUser = async (req, res, next) => {
+  const userId = req.user._id;
+
+  const userFollowedByMe = await User.findById(userId).select("following");
+
+  const users = await User.aggregate([
+    {
+      $match: { _id: { $ne: userId } },
+    },
+    {
+      $sample: { size: 10 },
+    },
+  ]);
+
+  const filteredUsers = users.filter(
+    (user) => !userFollowedByMe.following.includes(user._id.toString())
+  );
+
+  const suggestedUsers = filteredUsers.slice(0, 4).map((user) => {
+    delete user.password;
+    return user;
+  });
+
+  res.status(200).json({ success: true, data: suggestedUsers });
 };
