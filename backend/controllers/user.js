@@ -21,12 +21,19 @@ export const followUnfollowUser = async (req, res, next) => {
   const currentUser = req.user;
 
   if (currentUser._id.toString() === id) {
-    return res.status(400).json("You can't follow yourself!");
+    return next(
+      new BadRequestException(
+        "You can`t follow yourself!",
+        ErrorCodes.INVALID_REQUEST
+      )
+    );
   }
 
   const userToModify = await User.findById(id);
   if (!userToModify) {
-    return res.status(404).json("User not found!");
+    return next(
+      new BadRequestException("User not Found", ErrorCodes.USER_NOT_FOUND)
+    );
   }
 
   const isFollowing = currentUser.following.some(
@@ -84,4 +91,39 @@ export const getSuggestedUser = async (req, res, next) => {
   });
 
   res.status(200).json({ success: true, data: suggestedUsers });
+};
+export const updateUser = async (req, res, next) => {
+  const { fullName, username, bio, link, newPassword, currentPassword } =
+    req.body;
+  const { profileImg, coverImg } = req.body;
+  const user = req.user;
+  if ((!newPassword && currentPassword) || (newPassword && !currentPassword)) {
+    return next(
+      new BadRequestException(
+        "Please provide both new password and current password",
+        ErrorCodes.INVALID_REQUEST
+      )
+    );
+  }
+  if (newPassword && currentPassword) {
+    const isMatch = bcrypt.compareSync(currentPassword, user.password);
+    if (!isMatch) {
+      return next(
+        new BadRequestException(
+          "Your password is incorrect",
+          ErrorCodes.INVALID_CREDENTIAL
+        )
+      );
+    }
+    if (newPassword.lenth < 6) {
+      return next(
+        new BadRequestException(
+          "new password must be atleast 6 characters!",
+          ErrorCodes.INVALID_REQUEST
+        )
+      );
+    }
+    //update the password
+    user.password = bcrypt.hashSync(newPassword, 10);
+  }
 };
