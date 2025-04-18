@@ -1,3 +1,4 @@
+import { v2 as cloudinary } from "cloudinary";
 import { BadRequestException } from "../exceptions/badRequestException.js";
 import { ErrorCodes } from "../exceptions/root.js";
 import Notification from "../models/notification.js";
@@ -96,7 +97,7 @@ export const updateUser = async (req, res, next) => {
   const { fullName, username, bio, link, newPassword, currentPassword } =
     req.body;
   const { profileImg, coverImg } = req.body;
-  const user = req.user;
+  let user = req.user;
   if ((!newPassword && currentPassword) || (newPassword && !currentPassword)) {
     return next(
       new BadRequestException(
@@ -125,5 +126,32 @@ export const updateUser = async (req, res, next) => {
     }
     //update the password
     user.password = bcrypt.hashSync(newPassword, 10);
+    //update coverImg and profileImg
   }
+  if (profileImg) {
+    if (user.profileImg) {
+      const imgId = user.profileImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(imgId);
+    }
+    const uploadResponse = await cloudinary.uploader.upload(profileImg);
+    profileImg = uploadResponse.secure_url;
+  }
+  if (coverImg) {
+    if (user.coverImg) {
+      const imgId = await user.coverImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(imgId);
+    }
+    const uploadResponse = await cloudinary.uploader.upload(coverImg);
+    coverImg = uploadResponse.secure_url;
+  }
+  user.fullName = fullName || user.fullName;
+  user.username = username || user.username;
+  user.bio = bio || user.bio;
+  user.link = link || user.link;
+  user.email = email || user.email;
+  user.profileImg = profileImg || user.profileImg;
+  user.coverImg = coverImg || user.coverImg;
+  user = await user.save();
+  const { password, ...userData } = user;
+  return res.status(200).json({ success: true, data: userData });
 };
