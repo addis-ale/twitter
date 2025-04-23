@@ -51,3 +51,27 @@ export const deletePost = async (req, res, next) => {
     .status(200)
     .json({ success: true, message: "Post deleted successfully!" });
 };
+export const commentOnPost = async (req, res, next) => {
+  const { id } = req.params;
+  const { text } = req.body;
+  const userId = req.user._id;
+  if (!text) {
+    return next(
+      new BadRequestException(
+        "Text field is required",
+        ErrorCodes.INVALID_REQUEST
+      )
+    );
+  }
+  const post = await Post.findById(id);
+  if (!post) {
+    return next(
+      new BadRequestException("Post not found!", ErrorCodes.INVALID_REQUEST)
+    );
+  }
+  const comment = { user: userId, text };
+  post.comments.push(comment);
+  console.log(post);
+  await post.save();
+  res.status(200).json({ success: true, data: post });
+};
