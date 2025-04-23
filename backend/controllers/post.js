@@ -28,3 +28,26 @@ export const createPost = async (req, res, next) => {
   await newPost.save();
   res.status(201).json({ success: true, data: newPost });
 };
+export const deletePost = async (req, res, next) => {
+  const { id } = req.params;
+
+  const post = await Post.findById(id);
+
+  if (!post) {
+    return next(
+      new BadRequestException("Post not found!", ErrorCodes.INVALID_REQUEST)
+    );
+  }
+  if (post.user.toString() !== req.user._id.toString()) {
+    return next(
+      new BadRequestException("Unauthorized", ErrorCodes.INVALID_CREDENTIAL)
+    );
+  }
+  if (post.img) {
+    await cloudinary.uploader.destroy(post.img.split("/").pop().split(".")[0]);
+  }
+  await Post.findByIdAndDelete(post._id);
+  res
+    .status(200)
+    .json({ success: true, message: "Post deleted successfully!" });
+};
