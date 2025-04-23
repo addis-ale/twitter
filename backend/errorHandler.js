@@ -8,6 +8,7 @@ export const errorHandler = (method) => {
     try {
       await method(req, res, next);
     } catch (error) {
+      console.log(error);
       let exception;
       if (error instanceof ZodError) {
         const formattedErrors = error.errors.map((err) => ({

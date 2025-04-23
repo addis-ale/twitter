@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { compareSync, hashSync } from "bcryptjs";
 import { BadRequestException } from "../exceptions/badRequestException.js";
 import { ErrorCodes } from "../exceptions/root.js";
 import Notification from "../models/notification.js";
@@ -94,10 +95,11 @@ export const getSuggestedUser = async (req, res, next) => {
   res.status(200).json({ success: true, data: suggestedUsers });
 };
 export const updateUser = async (req, res, next) => {
-  const { fullName, username, bio, link, newPassword, currentPassword } =
+  const { fullName, username, bio, link, newPassword, currentPassword, email } =
     req.body;
-  const { profileImg, coverImg } = req.body;
-  let user = req.user;
+  let { profileImg, coverImg } = req.body;
+  let user = await User.findById(req.user._id);
+
   if ((!newPassword && currentPassword) || (newPassword && !currentPassword)) {
     return next(
       new BadRequestException(
@@ -107,7 +109,8 @@ export const updateUser = async (req, res, next) => {
     );
   }
   if (newPassword && currentPassword) {
-    const isMatch = bcrypt.compareSync(currentPassword, user.password);
+    const isMatch = compareSync(currentPassword, user.password);
+
     if (!isMatch) {
       return next(
         new BadRequestException(
@@ -125,7 +128,7 @@ export const updateUser = async (req, res, next) => {
       );
     }
     //update the password
-    user.password = bcrypt.hashSync(newPassword, 10);
+    user.password = hashSync(newPassword, 10);
     //update coverImg and profileImg
   }
   if (profileImg) {
@@ -152,6 +155,6 @@ export const updateUser = async (req, res, next) => {
   user.profileImg = profileImg || user.profileImg;
   user.coverImg = coverImg || user.coverImg;
   user = await user.save();
-  const { password, ...userData } = user;
+  const { password, ...userData } = user._doc;
   return res.status(200).json({ success: true, data: userData });
 };
