@@ -4,6 +4,7 @@ import {
   createPost,
   deletePost,
   getAllPosts,
+  getFollowingPosts,
   getLikedPosts,
   likeUnlikePost,
 } from "../controllers/post.js";
@@ -12,6 +13,7 @@ import { errorHandler } from "../errorHandler.js";
 
 const postRoute = Router();
 postRoute.get("/all", authMiddleware, errorHandler(getAllPosts));
+postRoute.get("/following", authMiddleware, errorHandler(getFollowingPosts));
 postRoute.post("/create", authMiddleware, errorHandler(createPost));
 postRoute.post("/comment/:id", authMiddleware, commentOnPost);
 postRoute.post("/like/:id", authMiddleware, errorHandler(likeUnlikePost));

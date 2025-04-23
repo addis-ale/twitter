@@ -159,3 +159,22 @@ export const getLikedPosts = async (req, res, next) => {
     data: likedPosts,
   });
 };
+export const getFollowingPosts = async (req, res, next) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  if (!user) {
+    return next(
+      new BadRequestException("User not found", ErrorCodes.USER_NOT_FOUND)
+    );
+  }
+  const following = user.following;
+  const followingPosts = await Post.find({ user: { $in: following } })
+    .sort({
+      createdAt: -1,
+    })
+    .populate([
+      { path: "user", select: "-password" },
+      { path: "comments", populate: [{ path: "user", select: "-1" }] },
+    ]);
+  res.status(200).json({ success: true, data: followingPosts });
+};
