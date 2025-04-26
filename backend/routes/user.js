@@ -13,5 +13,4 @@ userRoute.get("/profile/:username", errorHandler(getUserProfile));
 userRoute.post("/follow/:id", authMiddleware, errorHandler(followUnfollowUser));
 userRoute.get("/suggested", authMiddleware, errorHandler(getSuggestedUser));
 userRoute.post("/update", authMiddleware, errorHandler(updateUser));
-
 export default userRoute;

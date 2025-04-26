@@ -178,3 +178,30 @@ export const getFollowingPosts = async (req, res, next) => {
     ]);
   res.status(200).json({ success: true, data: followingPosts });
 };
+export const getUserPosts = async (req, res, next) => {
+  const { username } = req.params;
+  const user = await User.findOne({ username });
+  if (!user) {
+    return next(
+      new BadRequestException("User not found!", ErrorCodes.USER_NOT_FOUND)
+    );
+  }
+  const posts = await Post.find({ user: user._id })
+    .sort({ createdAt: -1 })
+    .populate([
+      {
+        path: "user",
+        select: "-password",
+      },
+      {
+        path: "comments",
+        populate: [
+          {
+            path: "user",
+            select: "-password",
+          },
+        ],
+      },
+    ]);
+  res.status(200).json({ success: true, data: posts });
+};
