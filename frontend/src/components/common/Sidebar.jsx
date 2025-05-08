@@ -5,7 +5,7 @@ import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 const sideBarNavigation = [
   {
@@ -25,6 +25,7 @@ const sideBarNavigation = [
   },
 ];
 const Sidebar = () => {
+  const queryClient = useQueryClient();
   const { mutate: logOut } = useMutation({
     mutationFn: async () => {
       try {
@@ -32,7 +33,6 @@ const Sidebar = () => {
           method: "POST",
         });
         const data = await res.json();
-        console.log(data);
         if (!res.ok) {
           const message = data.error.message || "Something went wrong!";
           throw new Error(message);
@@ -45,14 +45,11 @@ const Sidebar = () => {
     },
     onSuccess: () => {
       toast.success("Logged Out!");
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
   });
-  //TODO: get the user and make the logout ui
-  const data = {
-    fullName: "John Doe",
-    username: "johndoe",
-    profileImg: "/avatars/boy1.png",
-  };
+  const { data } = useQuery({ queryKey: ["authUser"] });
+  console.log("the data of the user from sidebar", data);
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
       <div className="sticky top-0 left-0 h-screen flex flex-col border-r border-gray-700 w-20 md:w-full">
