@@ -5,6 +5,8 @@ import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 const sideBarNavigation = [
   {
     name: "Home",
@@ -14,15 +16,37 @@ const sideBarNavigation = [
   {
     name: "Notifications",
     icon: IoNotifications,
-    link: "/",
+    link: "/notifications",
   },
   {
     name: "Profile",
     icon: FaUser,
-    link: "/",
+    link: "/profile",
   },
 ];
 const Sidebar = () => {
+  const { mutate: logOut } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("/api/auth/logout", {
+          method: "POST",
+        });
+        const data = await res.json();
+        console.log(data);
+        if (!res.ok) {
+          const message = data.error.message || "Something went wrong!";
+          throw new Error(message);
+        }
+        return data;
+      } catch (error) {
+        toast.error(error.message);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Logged Out!");
+    },
+  });
   //TODO: get the user and make the logout ui
   const data = {
     fullName: "John Doe",
@@ -67,7 +91,13 @@ const Sidebar = () => {
                 </p>
                 <p className="text-slate-500 text-sm">@{data?.username}</p>
               </div>
-              <BiLogOut className="w-5 h-5 cursor-pointer" />
+              <BiLogOut
+                className="w-5 h-5 cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logOut();
+                }}
+              />
             </div>
           </Link>
         )}
