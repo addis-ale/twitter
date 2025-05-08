@@ -5,7 +5,8 @@ import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import XSvg from "../../../components/svgs/X";
-
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -13,14 +14,46 @@ const SignUpPage = () => {
     fullName: "",
     password: "",
   });
+  const { mutate, isError, isPending, error } = useMutation({
+    mutationFn: async ({ email, username, fullName, password }) => {
+      try {
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, username, fullName, password }),
+        });
+        const data = await res.json();
+        console.log(data);
+        if (!res.ok) {
+          let message;
+          if (data.errorCode === 3003) {
+            message = data?.error?.error[0]?.message;
+          } else {
+            message = data?.errorMessage || "Something went wrong!";
+          }
+          throw new Error(message);
+        }
+        return data;
+      } catch (error) {
+        toast.error(error.message || "Unknown error occurred.");
+
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Account created successfully!");
+    },
+  });
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+    mutate(formData);
   };
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const isError = false;
+
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen px-10">
       <div className="flex-1 hidden lg:flex items-center  justify-center">
@@ -89,14 +122,14 @@ const SignUpPage = () => {
             />
           </label>
           <button className="btn rounded-full btn-primary text-white">
-            Sign up
+            {isPending ? "Loading" : "Sign up"}
           </button>
           {isError && (
             <p
               className="text-red-500
           "
             >
-              Something went wrong
+              {error.message}
             </p>
           )}
         </form>
