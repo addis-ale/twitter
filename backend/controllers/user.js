@@ -71,7 +71,6 @@ export const followUnfollowUser = async (req, res, next) => {
 };
 export const getSuggestedUser = async (req, res, next) => {
   const userId = req.user._id;
-
   const userFollowedByMe = await User.findById(userId).select("following");
 
   const users = await User.aggregate([
